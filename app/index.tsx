@@ -1,8 +1,16 @@
 import { Colors } from "@/constants/Colors";
 import { View, Text, Image, TouchableOpacity, StyleSheet, Dimensions } from "react-native";
+import { useRouter } from "expo-router";
 
 const { width, height } = Dimensions.get("window");
+
 export default function StartPage() {
+  const router = useRouter();
+
+  const handleStartButtonPress = () => {
+    router.push("/main");
+  };
+
   return(
     <View style={styles.container}>
       <Image source={require("../assets/images/BrotoFacilFavicon.png")} style={styles.logo} />
@@ -12,7 +20,7 @@ export default function StartPage() {
         - BROTO FÁCIL
       </Text>
       <Text style={styles.subtitle}>A luz está pronta, só falta você plantar o primeiro passo!</Text>
-      <TouchableOpacity style={styles.button}>
+      <TouchableOpacity style={styles.button} onPress={handleStartButtonPress}>
         <Text style={styles.buttonText}>Começar</Text>
       </TouchableOpacity>
     </View>
