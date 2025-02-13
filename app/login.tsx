@@ -1,9 +1,40 @@
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Dimensions} from "react-native";
 import { Colors } from "@/constants/Colors";
+import { useEffect, useState } from "react";
+import { useRouter } from "expo-router";
 
 const { width, height } = Dimensions.get("window");
 
 export default function LoginRegisterPage() {
+  const [isRegistering, setIsRegistering] = useState(false);
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [username, setUsername] = useState("");
+
+  const router = useRouter();
+
+  const validateInputs = () => {
+    if (!email || !password || (isRegistering && !username) || (!isRegistering && !confirmPassword)) {
+      alert("Todos os campos são obrigatórios!");
+      return false;
+    }
+
+    if (!isRegistering && password !== confirmPassword) {
+      alert("As senhas não coincidem!");
+      return false;
+    }
+
+    return true;
+  };
+  
+  const handleSubmit = () => {
+    if (validateInputs()) {
+      router.push("/main");
+    }
+  };
+
   return (
     <View style={styles.body}>
       <View style={styles.loginContainer}>
@@ -11,17 +42,54 @@ export default function LoginRegisterPage() {
       </View>
       <View style={styles.main}>
         <View style={styles.inputsContainer}>
-          <TextInput style={styles.input} placeholder="E-mail" placeholderTextColor="#6a8a25"/>
-          <TextInput style={styles.input} placeholder="Senha" placeholderTextColor="#6a8a25"/>
-          <TextInput style={styles.input} placeholder="Confirmar Senha" placeholderTextColor="#6a8a25"/>
-        </View>
+            {isRegistering && (
+              <TextInput
+                style={styles.input}
+                placeholder="Nome de Usuário"
+                placeholderTextColor="#6a8a25"
+                value={username}
+                onChangeText={setUsername}
+              />
+            )}
+            <TextInput
+              style={styles.input}
+              placeholder="E-mail"
+              placeholderTextColor="#6a8a25"
+              value={email}
+              onChangeText={setEmail}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Senha"
+              placeholderTextColor="#6a8a25"
+              secureTextEntry
+              value={password}
+              onChangeText={setPassword}
+            />
+            {!isRegistering && (
+              <TextInput
+                style={styles.input}
+                placeholder="Confirmar Senha"
+                placeholderTextColor="#6a8a25"
+                secureTextEntry
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+              />
+            )}
+          </View>
         <TouchableOpacity style={styles.loginButton}>
-          <Text style={styles.loginButtonText}>Fazer Login</Text>
+          <Text style={styles.loginButtonText} onPress={handleSubmit}>
+            {isRegistering ? "Cadastrar-se" : "Fazer Login"}
+          </Text>
         </TouchableOpacity>
         <View>
-          <Text style={styles.textAlt}>Não possui um login?</Text>
+          <Text style={styles.textAlt}>
+            {isRegistering ? "Já possui um login?" : "Não possui um login?"}  
+          </Text>
           <TouchableOpacity style={styles.anchorAlt}>
-            <Text style={styles.anchorAltText}>REGISTRE-SE</Text>
+            <Text style={styles.anchorAltText} onPress={() => setIsRegistering(!isRegistering)}>
+              {isRegistering ? "LOGIN" : "CADASTRO"}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>

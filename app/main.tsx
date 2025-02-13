@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Colors } from "@/constants/Colors";
 import { View, Text, TouchableOpacity, Dimensions, Modal, TextInput, StyleSheet, TouchableWithoutFeedback, Image} from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome";
 import { useRouter } from "expo-router";
 import { Picker } from "@react-native-picker/picker";
 import * as ImagePicker from "expo-image-picker";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const {width, height} = Dimensions.get("window");
 
@@ -30,7 +31,7 @@ export default function HomePage() {
   const [isModalCalculatingOpen, setIsModalCalculatingOpen] = useState(false);
   const [isModalResultOpen, setIsModalResultOpen] = useState(false);
 
-  const [name, setName] = useState("");
+  const [name, setName] = useState<string | null>(null);
   const [selectedLamp, setSelectedLamp] = useState<number | null>(null);
   const [selectedPlant, setSelectedPlant] = useState<string | null>(null);
 
@@ -38,7 +39,46 @@ export default function HomePage() {
 
   const router = useRouter();
 
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const storedName = await AsyncStorage.getItem("name");
+        const storedLamp = await AsyncStorage.getItem("selectedLamp");
+        const storedPlant = await AsyncStorage.getItem("selectedPlant");
+
+        if (storedName) setName(JSON.parse(storedName));
+        if (storedLamp) setSelectedLamp(JSON.parse(storedLamp));
+        if (storedPlant) setSelectedPlant(JSON.parse(storedPlant));
+      } catch (error) {
+        console.log("Erro ao carregar dados:", error);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  const saveData = async () => {
+    try{
+      await AsyncStorage.setItem('name', JSON.stringify(name));
+      await AsyncStorage.setItem('selectedLamp', JSON.stringify(selectedLamp));
+      await AsyncStorage.setItem('selectedPlant', JSON.stringify(selectedPlant));
+      router.push('/login');
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    if (isModalDataOpen) {
+      setName("");
+      setSelectedLamp(null);
+      setSelectedPlant(null);
+      setSelectedImage(undefined);
+    }
+  }, [isModalDataOpen]);
+
   const openPreviewModal = () => {
+
     if (!name || name === "NOME") {
       alert("Por favor, insira um nome válido.");
       return;
@@ -54,6 +94,7 @@ export default function HomePage() {
       return;
     }
 
+    setIsModalDataOpen(false);
     setIsModalPreviewOpen(true);
   }
 
@@ -81,7 +122,7 @@ export default function HomePage() {
 
     if (!result.canceled) {
       setSelectedImage(result.assets[0].uri);
-      openPreviewModal();
+      openPreviewModal;
     }
   };
 
@@ -107,10 +148,25 @@ export default function HomePage() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>SUAS MEDIÇÕES</Text>
-      <TouchableOpacity style={styles.meditionButton} onPress={() => setIsModalDataOpen(true)}>
-        <Icon name="plus-circle" size={40} color="#6a8a25" />
-        <Text style={styles.meditionText}>CRIE UMA NOVA MEDIÇÃO</Text>
-      </TouchableOpacity>
+        {name && selectedLamp && selectedPlant ? (
+         <View style={styles.mainContainer}>
+          <Text style={styles.mainText}>{name}</Text>
+          <Text style={styles.mainTitle}>VALOR PPFD</Text>
+          <View style={styles.mainTextContent}> 
+            <Text style={styles.mainText}>
+              {lampTypes.find((lamp) => lamp.value === selectedLamp)?.label}
+            </Text>
+            <Text style={styles.mainText}>
+              {plantTypes.find((plant) => plant.value === selectedPlant)?.label}
+            </Text>
+          </View>
+         </View> 
+        ) : (
+          <TouchableOpacity style={styles.meditionButton} onPress={() => setIsModalDataOpen(true)}>
+            <Icon name="plus-circle" size={40} color="#6a8a25" />
+            <Text style={styles.meditionText}>CRIE UMA NOVA MEDIÇÃO</Text>
+          </TouchableOpacity>
+        )}
       <TouchableOpacity style={styles.button} onPress={() => setIsModalDataOpen(true)}>
         <Text style={styles.buttonText}>NOVA MEDIÇÃO</Text>
       </TouchableOpacity>
@@ -125,7 +181,7 @@ export default function HomePage() {
                     style={styles.modalInput} 
                     placeholder="NOME" 
                     placeholderTextColor="#6a8a25"
-                    value={name}
+                    value={name ?? ""}
                     onChangeText={setName}  
                   />
                   <View style={styles.pickerContainer}>
@@ -210,7 +266,7 @@ export default function HomePage() {
                 </View>
                 <Icon name="smile-o" size={50} color="#6a8a25" />
                 <View style={styles.resultButtons}>
-                  <TouchableOpacity style={styles.buttonSave} onPress={() => router.push("/login")}>
+                  <TouchableOpacity style={styles.buttonSave} onPress={saveData}>
                     <Text style={styles.resultButtonText}>SALVAR</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.buttonClose} onPress={() => setIsModalResultOpen(false)}>
@@ -274,6 +330,30 @@ const styles = StyleSheet.create({
     fontSize: width * 0.06,
     fontWeight: "bold",
     color: Colors.light.background,
+  },
+  mainContainer: {
+    marginTop: 20,
+    width: width * 0.8,
+    backgroundColor: "#f4f4f4",
+    padding: 15,
+    borderRadius: 10,
+    alignItems: "center",
+    gap: 20,
+    borderColor: Colors.light.primary,
+    borderWidth: 1,
+  },
+  mainTextContent: {
+    flexDirection: "row",
+    gap: 15,
+  },
+  mainText: {
+    fontSize: width * 0.05,
+    color: "#6a8a25",
+  },
+  mainTitle: {
+    fontSize: width * 0.07,
+    color: "#888",
+    fontWeight: "bold",
   },
 
   modalContainer: {
