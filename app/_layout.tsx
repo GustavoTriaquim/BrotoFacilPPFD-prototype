@@ -10,7 +10,7 @@ const statusBarHeight = getStatusBarHeight();
 
 export default function Layout() {
   const pathname = usePathname(); 
-  const showHeader = pathname !== '/'; 
+  const showHeader = pathname !== '/' && pathname !== '/login'; 
 
   return (
     <>
