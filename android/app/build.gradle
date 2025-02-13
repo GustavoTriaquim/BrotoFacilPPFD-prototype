@@ -86,7 +86,7 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "com.brotofacilppfd"
+    namespace 'com.gustavotriaquim.BrotoFacilPPFD'
     defaultConfig {
         applicationId 'com.gustavotriaquim.BrotoFacilPPFD'
         minSdkVersion rootProject.ext.minSdkVersion

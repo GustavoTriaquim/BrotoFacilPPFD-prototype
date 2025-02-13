@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Colors } from "@/constants/Colors";
-import { View, Text, TouchableOpacity, Dimensions, Modal, TextInput, StyleSheet, TouchableWithoutFeedback, Image } from "react-native";
+import { View, Text, TouchableOpacity, Dimensions, Modal, TextInput, StyleSheet, TouchableWithoutFeedback, Image} from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome";
 import { useRouter } from "expo-router";
 import { Picker } from "@react-native-picker/picker";
+import * as ImagePicker from "expo-image-picker";
 
 const {width, height} = Dimensions.get("window");
 
@@ -33,7 +34,28 @@ export default function HomePage() {
   const [selectedLamp, setSelectedLamp] = useState<number | null>(null);
   const [selectedPlant, setSelectedPlant] = useState<string | null>(null);
 
+  const [selectedImage, setSelectedImage] = useState<string | undefined>(undefined);
+
   const router = useRouter();
+
+  const openPreviewModal = () => {
+    if (!name || name === "NOME") {
+      alert("Por favor, insira um nome válido.");
+      return;
+    }
+
+    if (selectedLamp === null) {
+      alert("Por favor, selecione um tipo de lâmpada.");
+      return;
+    }
+
+    if (selectedPlant === null) {
+      alert("Por favor, selecione um tipo de planta.");
+      return;
+    }
+
+    setIsModalPreviewOpen(true);
+  }
 
   const openCalculateModal = () => {
     setIsModalPreviewOpen(false);
@@ -43,6 +65,43 @@ export default function HomePage() {
       setIsModalCalculatingOpen(false);
       setIsModalResultOpen(true);
     }, 3000);
+  };
+  
+  const openCamera = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== "granted") {
+      alert("Permissão para acessar a câmera é necessária!");
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: false,
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setSelectedImage(result.assets[0].uri);
+      openPreviewModal();
+    }
+  };
+
+  const openGallery = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      alert("Permissão para acessar a galeria é necessária!");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      allowsEditing: true,
+      aspect: [3, 4],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setSelectedImage(result.assets[0].uri);
+      openPreviewModal();
+    }
   };
 
   return (
@@ -89,13 +148,13 @@ export default function HomePage() {
                 <View style={styles.hr} />
                 <View style={styles.modalOptions}>
                   <View style={styles.option}>
-                    <TouchableOpacity style={styles.modalButton} onPress={() => {setIsModalPreviewOpen(true); setIsModalDataOpen(false);} }>
+                    <TouchableOpacity onPress={openCamera} style={styles.modalButton}>
                       <Icon name="camera" size={50} color="#6a8a25"/>
                     </TouchableOpacity>
                     <Text style={styles.modalOptionText}>TIRAR FOTO</Text>
                   </View>
                   <View style={styles.option}>
-                    <TouchableOpacity style={styles.modalButton} onPress={() => {setIsModalPreviewOpen(true); setIsModalDataOpen(false);} }>
+                    <TouchableOpacity onPress={openGallery} style={styles.modalButton}>
                       <Icon name="upload" size={50} color="#6a8a25"/>
                     </TouchableOpacity>
                     <Text style={styles.modalOptionText}>CARREGAR</Text>
@@ -110,9 +169,9 @@ export default function HomePage() {
       <Modal visible={isModalPreviewOpen} transparent animationType="fade" onRequestClose={() => setIsModalPreviewOpen(false)}>
         <TouchableWithoutFeedback onPress={() => setIsModalPreviewOpen(false)}>
           <View style={styles.modalContainer}>
-            <TouchableWithoutFeedback onPress={(e) => e.preventDefault()}>
+            <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
               <View style={styles.modalContent}>
-                <Image style={styles.modalImage} source={require("../assets/images/Plantas.jpeg")}/>
+                <Image style={styles.modalImage} source={{ uri: selectedImage }}/>
                 <View style={styles.buttonOptions}>
                   <TouchableOpacity style={styles.denyButton} onPress={() => setIsModalPreviewOpen(false)}>
                     <Text style={styles.buttonOptionText}>Recusar</Text>
@@ -130,7 +189,7 @@ export default function HomePage() {
       <Modal visible={isModalCalculatingOpen}>
         <TouchableWithoutFeedback onPress={() => setIsModalCalculatingOpen(false)}>
           <View style={styles.modalContainer}>
-            <TouchableWithoutFeedback onPress={(e) => e.preventDefault()}>
+            <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
               <View style={styles.modalContent}>
                 <Text style={styles.textCalculate}>Processando Imagem...</Text>
               </View>
